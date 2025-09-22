@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 
 const AppContext = createContext();
 
-    const backendURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+    const backendURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 axios.defaults.baseURL = backendURL;
 axios.defaults.withCredentials = true;
 
@@ -59,18 +59,41 @@ function AppProvider({ children }) {
             console.error('Error response:', err.response?.data);
             console.error('Error status:', err.response?.status);
             console.error('Error message:', err.message);
-            toast.error(err.response?.data?.message || 'Registration failed');
+            console.error('Network error:', err.code);
+            
+            if (err.code === 'NETWORK_ERROR' || err.message === 'Network Error') {
+                toast.error('Cannot connect to server. Please check your connection.');
+            } else if (err.response?.status === 0) {
+                toast.error('Server is not responding. Please try again later.');
+            } else {
+                toast.error(err.response?.data?.message || 'Registration failed');
+            }
         }
     };
 
     const login = async (formData) => {
         try {
+            console.log('Attempting login with data:', { email: formData.email });
+            console.log('Making request to:', `${backendURL}/api/auth/login`);
             const { data } = await axios.post('/api/auth/login', formData);
+            console.log('Login successful:', data);
             setUser(data);
             toast.success('Logged in successfully');
             navigate('/');
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Login failed');
+            console.error('Login error:', err);
+            console.error('Error response:', err.response?.data);
+            console.error('Error status:', err.response?.status);
+            console.error('Error message:', err.message);
+            console.error('Network error:', err.code);
+            
+            if (err.code === 'NETWORK_ERROR' || err.message === 'Network Error') {
+                toast.error('Cannot connect to server. Please check your connection.');
+            } else if (err.response?.status === 0) {
+                toast.error('Server is not responding. Please try again later.');
+            } else {
+                toast.error(err.response?.data?.message || 'Login failed');
+            }
         }
     };
 
