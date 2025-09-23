@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import {
   Menu, X, Home, History, BadgeDollarSign, Goal, UserCircle, SlidersVertical
 } from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../contexts/AppProvider";
 import SkeletonLoader from "../components/SkeletonLoader";
 
 export default function UserLayout() {
-  const { setSearch, logout, navigate, user, loading } = useAppContext();
+  const {logout, user, loading } = useAppContext();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -63,12 +64,12 @@ export default function UserLayout() {
         ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="flex items-center justify-between px-5 py-8">
-          {/* <span
+          <span
             onClick={() => navigate("/")}
             className="text-xl text-green-600 font-bold flex items-center gap-2 cursor-pointer"
           >
             <img src="./logo.png" alt="" className="size-8" /> CashFlowX
-          </span> */}
+          </span>
           <button
             ref={toggleRef}
             className="md:hidden"
@@ -107,10 +108,10 @@ export default function UserLayout() {
             <Menu size={24} />
           </button>
 
-          <div className="flex items-center justify-between md:w-full gap-4">
+          <div className="flex items-center justify-end md:w-full gap-4">
             {/* Search */}
-            <div className="hidden md:flex items-center border pl-3 gap-2 bg-white border-gray-300 h-[46px] rounded-md w-full max-w-md">
-              <input
+            {/* <div className="hidden md:flex items-center border pl-3 gap-2 bg-white border-gray-300 h-[46px] rounded-md w-full max-w-md"> */}
+              {/* <input
                 type="text"
                 placeholder="Search transactions..."
                 className="w-full h-full text-sm text-gray-600 outline-none"
@@ -118,8 +119,8 @@ export default function UserLayout() {
                   setSearch(e.target.value);
                   navigate("/transactions");
                 }}
-              />
-            </div>
+              /> */}
+            {/* </div> */}
 
             {/* User Dropdown */}
             <div className="relative" ref={userDropdownRef}>

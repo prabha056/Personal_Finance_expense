@@ -19,20 +19,28 @@ function SetBudgets() {
       toast.error('Please select a category and enter a budget.');
       return;
     }
-    setLoading(true); // start loading
+
+    if (parseFloat(amount) <= 0) {
+      toast.error('Budget amount must be greater than 0.');
+      return;
+    }
+
+    setLoading(true);
     try {
       await addBudget({
         category,
-        amount
+        amount: parseFloat(amount)
       });
       await getBudgets();
       await getBudgetUsage();
       setCategory('');
       setAmount('');
+      toast.success('Budget set successfully!');
     } catch (error) {
-      console.log(error);
+      console.error('Error setting budget:', error);
+      // Error message is already handled in AppProvider
     } finally {
-      setLoading(false); // stop loading no matter what
+      setLoading(false);
     }
   };
 

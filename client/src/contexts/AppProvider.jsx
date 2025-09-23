@@ -115,7 +115,7 @@ function AppProvider({ children }) {
             navigate('/');
         } catch (err) {
             // Silently handle unauthorized - user needs to login/register
-            setUser(null);
+            setUser(err);
             navigate('/login');
         }
     };
@@ -124,8 +124,11 @@ function AppProvider({ children }) {
     const addTransaction = async (transaction) => {
         try {
             await axios.post('/api/transactions', transaction);
-            await fetchMonthlySummary();
-            await getTransactions();
+            await Promise.all([
+                fetchMonthlySummary(),
+                fetchSummary(),
+                getTransactions()
+            ]);
             toast.success('Transaction added');
         } catch {
             toast.error('Add transaction failed');
@@ -145,6 +148,11 @@ function AppProvider({ children }) {
     const deleteTransaction = async (id) => {
         try {
             await axios.delete(`/api/transactions/${id}`);
+            await Promise.all([
+                fetchMonthlySummary(),
+                fetchSummary(),
+                getTransactions()
+            ]);
             toast.success('Transaction deleted');
         } catch {
             toast.error('Delete transaction failed');
@@ -159,7 +167,7 @@ function AppProvider({ children }) {
             const { data } = await axios.get(`/api/transactions/summary/${year}/${month}`);
             setStatistic(data);
         } catch (error) {
-            return null;
+            return error;
         }
     };
 
@@ -225,10 +233,10 @@ function AppProvider({ children }) {
     const addBudget = async (budget) => {
         try {
             await axios.post('/api/budgets', budget);
-            toast.success('Budget added');
+            toast.success('Budget set successfully');
         } catch (error) {
             console.error('Add budget error:', error);
-            toast.error('Add budget failed: ' + (error.response?.data?.message || error.message));
+            toast.error('Set budget failed: ' + (error.response?.data?.message || error.message));
         }
     };
 

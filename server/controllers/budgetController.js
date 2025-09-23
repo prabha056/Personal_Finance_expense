@@ -3,21 +3,60 @@ import Transaction from '../models/Transaction.js';
 
 export const addBudget = async (req, res) => {
   try {
-    const { category, amount, month } = req.body;
+    const { category, amount } = req.body;
     const user = req.user._id;
 
-    const budget = await Budget.create({ user, category, amount, month });
+    // Validate input
+    if (!category || !amount || amount <= 0) {
+      return res.status(400).json({ message: 'Category and valid amount are required' });
+    }
+
+    const currentDate = new Date();
+    const month = currentDate.getMonth() + 1;
+    const year = currentDate.getFullYear();
+
+    // Check if budget already exists for this category this month
+    const existingBudget = await Budget.findOne({ 
+      user, 
+      category, 
+      month, 
+      year 
+    });
+
+    let budget;
+    if (existingBudget) {
+      // Update existing budget
+      budget = await Budget.findOneAndUpdate(
+        { _id: existingBudget._id },
+        { amount: parseFloat(amount) },
+        { new: true }
+      );
+    } else {
+      // Create new budget
+      budget = await Budget.create({ user, category, amount, month, year });
+    }
+
     res.status(201).json(budget);
   } catch (err) {
+    console.error('Add budget error:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
 
 export const getBudgets = async (req, res) => {
   try {
-    const budgets = await Budget.find({ user: req.user._id });
+    const currentDate = new Date();
+    const month = currentDate.getMonth() + 1;
+    const year = currentDate.getFullYear();
+    
+    const budgets = await Budget.find({ 
+      user: req.user._id,
+      month,
+      year
+    }).sort({ createdAt: -1 });
     res.status(200).json(budgets);
   } catch (err) {
+    console.error('Get budgets error:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -27,9 +66,14 @@ export const updateBudget = async (req, res) => {
     const { id } = req.params;
     const { category, amount } = req.body;
 
+    // Validate input
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: 'Valid amount is required' });
+    }
+
     const budget = await Budget.findOneAndUpdate(
       { _id: id, user: req.user._id },
-      { category, amount },
+      { amount: parseFloat(amount) },
       { new: true }
     );
 
@@ -37,6 +81,7 @@ export const updateBudget = async (req, res) => {
 
     res.status(200).json(budget);
   } catch (err) {
+    console.error('Update budget error:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -48,8 +93,9 @@ export const deleteBudget = async (req, res) => {
 
     if (!budget) return res.status(404).json({ message: 'Budget not found' });
 
-    res.status(200).json({ message: 'Budget deleted' });
+    res.status(200).json({ message: 'Budget deleted successfully' });
   } catch (err) {
+    console.error('Delete budget error:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 };

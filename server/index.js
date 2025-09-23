@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
 import budgetRoutes from './routes/budgetRoutes.js';
@@ -9,7 +10,8 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
 dotenv.config();
-connectDB();
+// Ensure DB connects before proceeding
+await connectDB();
 
 const app = express();
 app.use(cookieParser());
@@ -44,6 +46,37 @@ app.use(cors({
 
 app.use(express.json());
 
+const PORT = process.env.PORT || 5000;
+
+// One-time migration to drop legacy unique index on budgets.category
+async function ensureBudgetIndexes() {
+  try {
+    const db = mongoose.connection.db;
+    console.log('Connected to MongoDB database:', db.databaseName);
+    const budgets = db.collection('budgets');
+    const indexes = await budgets.indexes();
+    // Find any index that is solely on { category: 1 }
+    const legacyByName = indexes.find((idx) => idx.name === 'category_1');
+    const legacyByKey = indexes.find((idx) => idx.key && Object.keys(idx.key).length === 1 && idx.key.category === 1);
+    const legacyToDrop = legacyByName?.name || legacyByKey?.name;
+    if (legacyToDrop) {
+      console.log(`Dropping legacy index on budgets: ${legacyToDrop}`);
+      await budgets.dropIndex(legacyToDrop);
+    }
+    // Ensure the new compound unique index exists
+    const compoundName = 'user_1_category_1_month_1_year_1';
+    const hasCompound = indexes.find((idx) => idx.name === compoundName);
+    if (!hasCompound) {
+      console.log('Creating compound unique index on budgets { user, category, month, year }');
+      await budgets.createIndex({ user: 1, category: 1, month: 1, year: 1 }, { unique: true, name: compoundName });
+    }
+  } catch (e) {
+    console.warn('Index migration warning:', e.message);
+  }
+}
+// Run migration before server starts listening
+await ensureBudgetIndexes();
+
 app.get('/', (req, res) => {
   res.json({ 
     message: 'API is running...', 
@@ -77,9 +110,6 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', auth, transactionRoutes);
 app.use('/api/budgets', auth, budgetRoutes);
-
-
-const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

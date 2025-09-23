@@ -2,18 +2,20 @@ import Transaction from '../models/Transaction.js';
 
 export const addTransaction = async (req, res) => {
   try {
-    const transaction = await Transaction.create({ ...req.body, user: req.user.id });
+    const transaction = await Transaction.create({ ...req.body, user: req.user._id });
     res.status(201).json(transaction);
   } catch (err) {
+    console.error('Add transaction error:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
 
 export const getTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.user.id });
+    const transactions = await Transaction.find({ user: req.user._id }).sort({ date: -1 });
     res.json(transactions);
   } catch (err) {
+    console.error('Get transactions error:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 };
@@ -26,7 +28,7 @@ export const getMonthlySummary = async (req, res) => {
     const end = new Date(year, month, 0, 23, 59, 59, 999);
 
     const transactions = await Transaction.find({
-      user: req.user.id,
+      user: req.user._id,
       date: { $gte: start, $lte: end }
     });
 
@@ -63,6 +65,20 @@ export const getMonthlySummary = async (req, res) => {
 
 
 
+
+export const deleteTransaction = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const transaction = await Transaction.findOneAndDelete({ _id: id, user: req.user._id });
+
+    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+
+    res.status(200).json({ message: 'Transaction deleted successfully' });
+  } catch (err) {
+    console.error('Delete transaction error:', err);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
 
 export const getMonthlyIncomeExpenseSummary = async (req, res) => {
   try {
