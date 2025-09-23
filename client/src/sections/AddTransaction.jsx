@@ -16,8 +16,8 @@ function AddTransaction() {
 
   // Predefined category options
   const expenseTypes = [
-    "Food & Dining",
-    "Transportation",
+    // "Food & Dining",
+    // "Transportation",
     "Shopping",
     "Entertainment",
     "Bills & Utilities",

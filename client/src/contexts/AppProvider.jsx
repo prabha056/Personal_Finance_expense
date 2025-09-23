@@ -10,8 +10,8 @@ axios.defaults.baseURL = backendURL;
 axios.defaults.withCredentials = true;
 
 const defaultExpenseCategories = [
-    'Food & Dining',
-    'Transportation',
+    // 'Food & Dining',
+    // 'Transportation',
     'Shopping',
     'Entertainment',
     'Bills & Utilities',
