@@ -2,10 +2,10 @@
 /client/node_modules
 /server/node_modules
 
-# Environment variables
-/client/.env
-/server/.env
-.env
+# # Environment variables
+# /client/.env
+# /server/.env
+# .env
 
 # IDE specific files
 .idea/
